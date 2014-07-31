@@ -17,10 +17,21 @@ function preload() {
 
 function create() {
   game.physics.startSystem(Phaser.Physics.ARCADE);
+
   platforms = game.add.group();
   platforms.enableBody = true;
   var ground = platforms.create(0, game.world.height-32, 'platform');
+  ground.scale.setTo(2, 1);
   ground.body.immovable = true;
+
+  var ledge = platforms.create(100, 300, 'platform');
+  ledge.body.immovable = true;
+  ledge.scale.setTo(0.5, 1);
+
+  var ledge = platforms.create(400, 430, 'platform');
+  ledge.body.immovable = true;
+  ledge.scale.setTo(0.5, 1);
+
   player = game.add.sprite(0, 0, 'bunny');
   game.physics.arcade.enable(player);
   player.body.bounce.y = 0.2;
@@ -31,22 +42,21 @@ function create() {
 function update() {
   game.physics.arcade.collide(player, platforms);
   cursors = game.input.keyboard.createCursorKeys();
-  var player_v = player.body.velocity;
   if (cursors.left.isDown) {
-    player_v.x -= 8;
+    player.body.velocity.x -= 8;
   }
   if (cursors.right.isDown) {
-    player_v.x += 8;
+    player.body.velocity.x += 8;
   }
   if (cursors.up.isDown && player.body.touching.down) {
-    player_v.y = -200;
+    player.body.velocity.y = -300;
   }
   if (player.body.touching.down) {
-    player_v.x *= 0.95;
+    player.body.velocity.x *= 0.95;
   } else {
-    player_v.x *= 0.98;
+    player.body.velocity.x *= 0.98;
   }
-  if (Math.abs(player_v.x) < 1) {
-    player_v.x = 0;
+  if (Math.abs(player.body.velocity.x) < 1) {
+    player.body.velocity.x = 0;
   }
 }
