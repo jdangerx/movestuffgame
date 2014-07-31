@@ -5,15 +5,22 @@ var game = new Phaser.Game(800, 600, Phaser.AUTO, '',
                             create: create,
                             update: update});
 var player,
+    platforms,
     cursors;
 
 function preload() {
   game.load.image('bunny', 'img/bunny.png');
+  game.load.image('platform', 'img/platform.png');
   // game.load.spritesheet('key', 'path/to/sprites.png');
 }
 
+
 function create() {
   game.physics.startSystem(Phaser.Physics.ARCADE);
+  platforms = game.add.group();
+  platforms.enableBody = true;
+  var ground = platforms.create(0, game.world.height-32, 'platform');
+  ground.body.immovable = true;
   player = game.add.sprite(0, 0, 'bunny');
   game.physics.arcade.enable(player);
   player.body.bounce.y = 0.2;
@@ -22,20 +29,24 @@ function create() {
 }
 
 function update() {
+  game.physics.arcade.collide(player, platforms);
   cursors = game.input.keyboard.createCursorKeys();
+  var player_v = player.body.velocity;
   if (cursors.left.isDown) {
-    player.body.velocity.x -= 8;
+    player_v.x -= 8;
   }
   if (cursors.right.isDown) {
-    player.body.velocity.x += 8;
+    player_v.x += 8;
   }
-  if (cursors.up.isDown) {
-    if (player.body.velocity.y >= -5) {
-      player.body.velocity.y = -200;
-    }
+  if (cursors.up.isDown && player.body.touching.down) {
+    player_v.y = -200;
   }
-  player.body.velocity.x *= 0.95;
-  if (Math.abs(player.body.velocity.x) < 1) {
-    player.body.velocity.x = 0;
+  if (player.body.touching.down) {
+    player_v.x *= 0.95;
+  } else {
+    player_v.x *= 0.98;
+  }
+  if (Math.abs(player_v.x) < 1) {
+    player_v.x = 0;
   }
 }
