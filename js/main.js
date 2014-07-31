@@ -24,16 +24,18 @@ function create() {
 function update() {
   cursors = game.input.keyboard.createCursorKeys();
   if (cursors.left.isDown) {
-    player.body.velocity.x -= 2;
+    player.body.velocity.x -= 8;
   }
   if (cursors.right.isDown) {
-    player.body.velocity.x += 2;
-  }
-  if (cursors.down.isDown) {
-    var v_x = player.body.velocity.x;
-    player.body.velocity.x -= v_x/Math.abs(v_x) * 5;
+    player.body.velocity.x += 8;
   }
   if (cursors.up.isDown) {
-    player.body.velocity.y += 2;
+    if (player.body.velocity.y >= -5) {
+      player.body.velocity.y = -200;
+    }
+  }
+  player.body.velocity.x *= 0.95;
+  if (Math.abs(player.body.velocity.x) < 1) {
+    player.body.velocity.x = 0;
   }
 }
