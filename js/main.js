@@ -3,7 +3,7 @@
 var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game',
                            {preload: preload,
                             create: create,
-                            update: update});
+                            update: update}, true);
 var player,
     currentSwap,
     platforms,
@@ -20,14 +20,15 @@ function preload() {
 }
 
 function create() {
+  // initialize keyboard controls
   keyboard = game.input.keyboard;
   w = keyboard.addKey(87);
   a = keyboard.addKey(65);
   s = keyboard.addKey(83);
   d = keyboard.addKey(68);
   shift = keyboard.addKey(16);
-
   cursors = game.input.keyboard.createCursorKeys();
+
   game.physics.startSystem(Phaser.Physics.ARCADE);
 
   immovables = game.add.group();
@@ -45,7 +46,6 @@ function create() {
   immovables.setAll('body.immovable', true);
 
   movables = game.add.group()
-
   player = movables.create(0, 0, 'bunny');
   movables.create(600, 0, 'invbunny');
   movables.create(400, 0, 'invbunny');
@@ -53,23 +53,23 @@ function create() {
 
   game.physics.arcade.enable(movables);
   movables.setAll('inputEnabled', true);
-  movables.setAll('body.gravity.y', 300);
+  movables.setAll('body.gravity.y', 200);
   movables.setAll('body.bounce.y', 0.2);
   movables.setAll('body.bounce.x', 0.2);
   movables.setAll('body.mass', 0.5);
   movables.setAll('body.collideWorldBounds', true);
+  movables.setAll('anchor', new Phaser.Point(0.5, 0.5));
   movables.forEach(function(movable) {
     movable.events.onInputOver.add(function() {
-      movable.alpha = 0.5;
-      currentSwap = movable;
-    }, this);
-    movable.events.onInputOut.add(function() {
-      movable.alpha = 1;
-      currentSwap = undefined;
+      if (movable != player) {
+        currentSwap = movable;
+      }
     }, this);
   });
 
   player.body.mass = 1;
+  player.alpha = 1;
+  player.swappable = false;
 
 
   // get keycodes if you want 'em
@@ -84,6 +84,23 @@ function update() {
   game.physics.arcade.collide(movables, immovables);
   game.physics.arcade.collide(movables, movables);
 
+  // select current swap target
+  var minDist = 300;
+  var mousePos = game.input.mousePointer;
+  movables.setAll('alpha', 0.6);
+  movables.forEach(function(movable) {
+    var dist = movable.body.position.distance(mousePos);
+    if (dist < minDist && movable != player) {
+      currentSwap = movable;
+      minDist = dist;
+    }
+  });
+  if (currentSwap) {
+    currentSwap.alpha = 1;
+  }
+  player.alpha = 1;
+
+  // move player
   if (cursors.left.isDown || a.isDown) {
     player.body.velocity.x -= 8;
     key_pressed = true;
@@ -92,9 +109,10 @@ function update() {
     player.body.velocity.x += 8;
   }
   if ((cursors.up.isDown || w.isDown) && player.body.touching.down) {
-    player.body.velocity.y = -300;
+    player.body.velocity.y = -250;
   }
 
+  // perform swap
   if (shift.isDown && shift.justPressed(10) && currentSwap) {
     var temp_v,
         temp_pos,
@@ -112,6 +130,7 @@ function update() {
     player.body.position = temp_pos;
   }
 
+  // friction
   movables.forEach(function(movable) {
     if (movable.body.touching.down) {
       movable.body.velocity.x *= 0.95;
@@ -119,8 +138,8 @@ function update() {
       movable.body.velocity.x *= 0.98;
     }
   });
-
   if (Math.abs(player.body.velocity.x) < 1) {
     player.body.velocity.x = 0;
   }
+
 }
