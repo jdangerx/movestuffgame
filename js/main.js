@@ -10,6 +10,7 @@ var player,
     shift,
     w, a, s, d,
     keyboard,
+    mouseWasClicked,
     cursors;
 
 function preload() {
@@ -76,8 +77,28 @@ function create() {
   // game.input.keyboard.onUpCallback = function() {
     // console.log(game.input.keyboard.lastKey.keyCode);
   // };
+  game.input.mouse.onMouseUp = function() {
+    mouseWasClicked = true;
+  };
+}
 
+function swap(player, currentSwap) {
+  if (!currentSwap) return;
+  var temp_v,
+      temp_pos,
+      massRatio = player.body.mass/currentSwap.body.mass;
 
+  console.log("swapping!");
+  temp_v = currentSwap.body.velocity;
+  currentSwap.body.velocity.x = player.body.velocity.x * massRatio;
+  currentSwap.body.velocity.y = player.body.velocity.y * massRatio;
+  player.body.velocity.x = temp_v.x / massRatio;
+  player.body.velocity.y = temp_v.y / massRatio;
+
+  temp_pos = currentSwap.body.position;
+  console.log(temp_pos, player.body.position);
+  currentSwap.body.position = player.body.position;
+  player.body.position = temp_pos;
 }
 
 function update() {
@@ -113,21 +134,9 @@ function update() {
   }
 
   // perform swap
-  if (shift.isDown && shift.justPressed(10) && currentSwap) {
-    var temp_v,
-        temp_pos,
-        massRatio = player.body.mass/currentSwap.body.mass;
-
-    console.log(currentSwap);
-    temp_v = currentSwap.body.velocity;
-    currentSwap.body.velocity.x = player.body.velocity.x * massRatio;
-    currentSwap.body.velocity.y = player.body.velocity.y * massRatio;
-    player.body.velocity.x = temp_v.x / massRatio;
-    player.body.velocity.y = temp_v.y / massRatio;
-
-    temp_pos = currentSwap.body.position;
-    currentSwap.body.position = player.body.position;
-    player.body.position = temp_pos;
+  if ((shift.isDown && shift.justPressed(10) && currentSwap) || mouseWasClicked) {
+    swap(player, currentSwap);
+    mouseWasClicked = false;
   }
 
   // friction
