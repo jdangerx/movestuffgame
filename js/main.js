@@ -1,11 +1,14 @@
 // var excuse = prompt("Why haven't you written any code yet?");
 // alert("There's no game because " + excuse);
-var game = new Phaser.Game(800, 600, Phaser.AUTO, '',
+var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game',
                            {preload: preload,
                             create: create,
                             update: update});
 var player,
     platforms,
+    shift,
+    w, a, s, d,
+    keyboard,
     cursors;
 
 function preload() {
@@ -15,8 +18,14 @@ function preload() {
   // game.load.spritesheet('key', 'path/to/sprites.png');
 }
 
-
 function create() {
+  keyboard = game.input.keyboard;
+  w = keyboard.addKey(87);
+  a = keyboard.addKey(65);
+  s = keyboard.addKey(83);
+  d = keyboard.addKey(68);
+  shift = keyboard.addKey(16);
+
   cursors = game.input.keyboard.createCursorKeys();
   game.physics.startSystem(Phaser.Physics.ARCADE);
 
@@ -50,6 +59,10 @@ function create() {
   other.body.gravity.y = 300;
   other.body.collideWorldBounds = true;
 
+  game.input.keyboard.onUpCallback = function() {
+    console.log(game.input.keyboard.lastKey.keyCode);
+  };
+
 
 }
 
@@ -57,16 +70,19 @@ function update() {
   game.physics.arcade.collide(player, platforms);
   game.physics.arcade.collide(other, platforms);
   game.physics.arcade.collide(other, player);
-  if (cursors.left.isDown) {
+
+  if (cursors.left.isDown || a.isDown) {
     player.body.velocity.x -= 8;
+    key_pressed = true;
   }
-  if (cursors.right.isDown) {
+  if (cursors.right.isDown || d.isDown) {
     player.body.velocity.x += 8;
   }
-  if (cursors.up.isDown && player.body.touching.down) {
+  if ((cursors.up.isDown || w.isDown) && player.body.touching.down) {
     player.body.velocity.y = -300;
   }
-  if (cursors.down.isDown && cursors.down.justPressed(10)) {
+
+  if (shift.isDown && shift.justPressed(10)) {
     var temp_v,
         temp_pos;
 
