@@ -5,6 +5,7 @@ var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game',
                             create: create,
                             update: update});
 var player,
+    currentSwap,
     platforms,
     shift,
     w, a, s, d,
@@ -29,47 +30,59 @@ function create() {
   cursors = game.input.keyboard.createCursorKeys();
   game.physics.startSystem(Phaser.Physics.ARCADE);
 
-  platforms = game.add.group();
-  platforms.enableBody = true;
-  var ground = platforms.create(0, game.world.height-32, 'platform');
+  immovables = game.add.group();
+  immovables.enableBody = true;
+
+  var ground = immovables.create(0, game.world.height-32, 'platform');
   ground.scale.setTo(2, 1);
-  ground.body.immovable = true;
-
-  var ledge = platforms.create(100, 300, 'platform');
-  ledge.body.immovable = true;
+  var ledge = immovables.create(100, 300, 'platform');
+  ledge.scale.setTo(0.5, 1);
+  var ledge = immovables.create(400, 430, 'platform');
+  ledge.scale.setTo(0.5, 1);
+  var ledge = immovables.create(400, 100, 'platform');
   ledge.scale.setTo(0.5, 1);
 
-  var ledge = platforms.create(400, 430, 'platform');
-  ledge.body.immovable = true;
-  ledge.scale.setTo(0.5, 1);
+  immovables.setAll('body.immovable', true);
 
-  var ledge = platforms.create(400, 100, 'platform');
-  ledge.body.immovable = true;
-  ledge.scale.setTo(0.5, 1);
+  movables = game.add.group()
 
-  player = game.add.sprite(0, 0, 'bunny');
-  game.physics.arcade.enable(player);
-  player.body.bounce.y = 0.2;
-  player.body.gravity.y = 300;
-  player.body.collideWorldBounds = true;
+  player = movables.create(0, 0, 'bunny');
+  movables.create(600, 0, 'invbunny');
+  movables.create(400, 0, 'invbunny');
+  movables.create(200, 0, 'invbunny');
 
-  other = game.add.sprite(600, 200, 'invbunny');
-  game.physics.arcade.enable(other);
-  other.body.bounce.y = 0.2;
-  other.body.gravity.y = 300;
-  other.body.collideWorldBounds = true;
+  game.physics.arcade.enable(movables);
+  movables.setAll('inputEnabled', true);
+  movables.setAll('body.gravity.y', 300);
+  movables.setAll('body.bounce.y', 0.2);
+  movables.setAll('body.bounce.x', 0.2);
+  movables.setAll('body.mass', 0.5);
+  movables.setAll('body.collideWorldBounds', true);
+  movables.forEach(function(movable) {
+    movable.events.onInputOver.add(function() {
+      movable.alpha = 0.5;
+      currentSwap = movable;
+    }, this);
+    movable.events.onInputOut.add(function() {
+      movable.alpha = 1;
+      currentSwap = undefined;
+    }, this);
+  });
 
-  game.input.keyboard.onUpCallback = function() {
-    console.log(game.input.keyboard.lastKey.keyCode);
-  };
+  player.body.mass = 1;
+
+
+  // get keycodes if you want 'em
+  // game.input.keyboard.onUpCallback = function() {
+    // console.log(game.input.keyboard.lastKey.keyCode);
+  // };
 
 
 }
 
 function update() {
-  game.physics.arcade.collide(player, platforms);
-  game.physics.arcade.collide(other, platforms);
-  game.physics.arcade.collide(other, player);
+  game.physics.arcade.collide(movables, immovables);
+  game.physics.arcade.collide(movables, movables);
 
   if (cursors.left.isDown || a.isDown) {
     player.body.velocity.x -= 8;
@@ -82,33 +95,30 @@ function update() {
     player.body.velocity.y = -300;
   }
 
-  if (shift.isDown && shift.justPressed(10)) {
+  if (shift.isDown && shift.justPressed(10) && currentSwap) {
     var temp_v,
-        temp_pos;
+        temp_pos,
+        massRatio = player.body.mass/currentSwap.body.mass;
 
-    temp_v = other.body.velocity;
-    other.body.velocity.x = player.body.velocity.x * 2;
-    other.body.velocity.y = player.body.velocity.y * 2;
-    player.body.velocity.x = temp_v.x * 0.5;
-    player.body.velocity.y = temp_v.y * 0.5;
+    console.log(currentSwap);
+    temp_v = currentSwap.body.velocity;
+    currentSwap.body.velocity.x = player.body.velocity.x * massRatio;
+    currentSwap.body.velocity.y = player.body.velocity.y * massRatio;
+    player.body.velocity.x = temp_v.x / massRatio;
+    player.body.velocity.y = temp_v.y / massRatio;
 
-    temp_pos = other.body.position;
-    other.body.position = player.body.position;
+    temp_pos = currentSwap.body.position;
+    currentSwap.body.position = player.body.position;
     player.body.position = temp_pos;
   }
 
-  if (player.body.touching.down) {
-    player.body.velocity.x *= 0.95;
-  } else {
-    player.body.velocity.x *= 0.98;
-  }
-
-
-  if (other.body.touching.down) {
-    other.body.velocity.x *= 0.95;
-  } else {
-    other.body.velocity.x *= 0.98;
-  }
+  movables.forEach(function(movable) {
+    if (movable.body.touching.down) {
+      movable.body.velocity.x *= 0.95;
+    } else {
+      movable.body.velocity.x *= 0.98;
+    }
+  });
 
   if (Math.abs(player.body.velocity.x) < 1) {
     player.body.velocity.x = 0;
