@@ -54,9 +54,9 @@ function create() {
 
   game.physics.arcade.enable(movables);
   movables.setAll('inputEnabled', true);
-  movables.setAll('body.gravity.y', 200);
-  movables.setAll('body.bounce.y', 0.2);
-  movables.setAll('body.bounce.x', 0.2);
+  movables.setAll('body.gravity.y', 300);
+  movables.setAll('body.bounce.y', 0.1);
+  movables.setAll('body.bounce.x', 0.1);
   movables.setAll('body.mass', 0.5);
   movables.setAll('body.collideWorldBounds', true);
   movables.setAll('anchor', new Phaser.Point(0.5, 0.5));
@@ -71,12 +71,17 @@ function create() {
   player.body.mass = 1;
   player.alpha = 1;
   player.swappable = false;
+  player.maxJumps = 2;
+  player.remainingJumps = 0;
 
 
   // get keycodes if you want 'em
   // game.input.keyboard.onUpCallback = function() {
     // console.log(game.input.keyboard.lastKey.keyCode);
   // };
+
+  // for some reason calling swap here doesn't swap properly, I think it's because
+  // currentSwap is set in update()
   game.input.mouse.onMouseUp = function() {
     mouseWasClicked = true;
   };
@@ -122,6 +127,11 @@ function update() {
   player.alpha = 1;
 
   // move player
+
+  if (player.body.touching.down) {
+    player.remainingJumps = player.maxJumps;
+  }
+
   if (cursors.left.isDown || a.isDown) {
     player.body.velocity.x -= 8;
     key_pressed = true;
@@ -129,8 +139,13 @@ function update() {
   if (cursors.right.isDown || d.isDown) {
     player.body.velocity.x += 8;
   }
-  if ((cursors.up.isDown || w.isDown) && player.body.touching.down) {
-    player.body.velocity.y = -250;
+
+  if ((cursors.up.isDown && cursors.up.justPressed(5)) ||
+      (w.isDown && w.justPressed(5))) {
+    if (player.remainingJumps > 0) {
+      player.body.velocity.y = -250;
+      player.remainingJumps -= 1;
+    }
   }
 
   // perform swap
