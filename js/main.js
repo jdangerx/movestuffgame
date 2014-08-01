@@ -93,7 +93,6 @@ function swap(player, currentSwap) {
       temp_pos,
       massRatio = player.body.mass/currentSwap.body.mass;
 
-  console.log("swapping!");
   temp_v = currentSwap.body.velocity;
   currentSwap.body.velocity.x = player.body.velocity.x * massRatio;
   currentSwap.body.velocity.y = player.body.velocity.y * massRatio;
@@ -101,7 +100,6 @@ function swap(player, currentSwap) {
   player.body.velocity.y = temp_v.y / massRatio;
 
   temp_pos = currentSwap.body.position;
-  console.log(temp_pos, player.body.position);
   currentSwap.body.position = player.body.position;
   player.body.position = temp_pos;
 }
